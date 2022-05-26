@@ -132,7 +132,7 @@
           <small><a target="_blank" href="https://github.com/PhilJbt/philjbt.github.io/blob/main/custos/" class="secondary">Consulter les sources</a></small>
         </div>
         <div class="version_container">
-          <small><p class="secondary version_content">v1.0</p></small>
+          <small><p class="secondary version_content">v1.0a</p></small>
         </div>
       </div>
 
@@ -335,6 +335,8 @@ function storeCreateDb() {
     document.getElementById('btn_sav').setAttribute('disabled', 'disabled');
     // Show the error in the console
     console.log(event.target.errorCode);
+    // Do not continue
+    return;
   }
 
   // Open the CUSTOS named indexedDB database
@@ -360,25 +362,22 @@ function storeCreateDb() {
     });
 
     // Create the 'key' index
-    let index = store.createIndex('key', 'key', {
+    let index = store.createIndex('key', {
       unique: false
     });
- };
+
+    // Close the database once the transaction completed
+    db.close();
+  };
 }
 
 // Erase the whole indexedDB CUSTOS
-function storeEraseDb () {
+function storeEraseDb() {
   var reqErase = indexedDB.deleteDatabase('CUSTOS');
 }
 
 // Store a new keys pair into the indexedDB database
-function storeSaveCredentials() {
-  // Erase the existing database
-  storeEraseDb();
-
-  // Check if the database exists, or create it
-  storeCreateDb();
-
+function storeSaveCredentials(scr, mod) {
   // Open the CUSTOS database
   const reqCreate = indexedDB.open('CUSTOS', 4);
 
@@ -397,32 +396,27 @@ function storeSaveCredentials() {
     const db = event.target.result;
 
     // Store the secret phrase
-    insertKey(db, document.getElementById('npt_sctp').value, 'scr');
+    updateKey(db, scr, 'scr');
     // Store the modifiers concatenated list
-    insertKey(db, getModifiers(), 'mod');
+    updateKey(db, mod, 'mod');
+
+    // Close the database once the transaction completed
+    db.close();
   };
 }
 
-// Insert a key into the indexedDB
-function insertKey(db, key, val) {
-    // Create a new transaction
-    const txn = db.transaction('secret', 'readwrite');
+// Update a key into the indexedDB
+function updateKey(db, key, val) {
+  // Create a new transaction
+  var transaction = db.transaction('secret', 'readwrite');
+  // Get the secret object store
+  var store = transaction.objectStore('secret');
 
-    // Get the secret object store
-    const store = txn.objectStore('secret');
-    // Insert a key/value pair
-    let query = store.put(key, val);
-
-    // The insert failed
-    query.onerror = function (event) {
-      // Show the error in the console
-      console.log(event.target.errorCode);
-    }
-
-    // Close the database once the transaction completed
-    txn.oncomplete = function () {
-        db.close();
-    };
+  // Get the key
+  store.get(key).onsuccess = function(e) {
+    // Update the value for the selected key
+    store.put(e.target.result, val);
+  };
 }
 
 // Load the indexedDB values and pre-fill the secret phrase and modifiers list DOM nodes
@@ -468,6 +462,9 @@ function storeLoadDb() {
         });
       }
     };
+
+    // Close the database once the transaction completed
+    db.close();
   };
 }
 
@@ -495,8 +492,8 @@ window.onload = function() {
 
   // Delete button bind
   document.getElementById('btn_del').addEventListener('click', function(event) {
-    // Erase the CUSTOS indexedDB
-    storeEraseDb();
+    // Erase credentials stored in the CUSTOS indexedDB
+    storeEraseCredentials();
   });
 
   // Save button bind
@@ -504,7 +501,7 @@ window.onload = function() {
     // If the secret phrase is not empty
     if (document.getElementById('npt_sctp').value.length > 0)
       // Store secret phrase and modifier list in the CUSTOS indexedDB
-      storeSaveCredentials();
+      storeSaveCredentials(document.getElementById('npt_sctp').value, getModifiers());
   });
 
   // Run button bind
