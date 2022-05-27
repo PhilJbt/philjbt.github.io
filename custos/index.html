@@ -172,7 +172,7 @@ const isOpenClass="modal-is-open",openingClass="modal-is-opening",closingClass="
 // Insert a character into a string, at a specific position
 function insertChar(_strPwd, _cInsert, _iPosition) {
   // Cap the index of the position
-  let iPos = _iPosition % (_strPwd.length - 2) + 1;
+  let iPos = (_iPosition % (_strPwd.length - 1)) + 1;
   // Return concatenated strings
   return [_strPwd.slice(0, iPos), _cInsert, _strPwd.slice(iPos)].join('');
 }
