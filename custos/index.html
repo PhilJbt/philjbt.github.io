@@ -132,7 +132,7 @@
           <small><a target="_blank" href="https://github.com/PhilJbt/philjbt.github.io/blob/main/custos/" class="secondary">Consulter les sources</a></small>
         </div>
         <div class="version_container">
-          <small><p class="secondary version_content">v1.0a</p></small>
+          <small><p class="secondary version_content">v1.0b</p></small>
         </div>
       </div>
 
@@ -334,21 +334,26 @@ function storeCreateDb() {
     document.getElementById('btn_del').setAttribute('disabled', 'disabled');
     document.getElementById('btn_sav').setAttribute('disabled', 'disabled');
     // Show the error in the console
-    console.log(event.target.errorCode);
+    console.log(`storeCreateDb()#1 : ${event.target.error.message}`);
     // Do not continue
     return;
   }
 
   // Open the CUSTOS named indexedDB database
-  const request = indexedDB.open('CUSTOS', 4);
+  const request = window.indexedDB.open('CUSTOS', 4);
 
   // If the opening fail
   request.onerror = (event) => {
-    // Disable the Delete and Save buttons
-    document.getElementById('btn_del').setAttribute('disabled', 'disabled');
-    document.getElementById('btn_sav').setAttribute('disabled', 'disabled');
-    // Show the error in the console
-    console.log(event.target.errorCode);
+    // If an occured, and not related to an not existing database
+    if (event.target.error.code !== 20) {
+      // Disable the Delete and Save buttons
+      document.getElementById('btn_del').setAttribute('disabled', 'disabled');
+      document.getElementById('btn_sav').setAttribute('disabled', 'disabled');
+      // Show the error in the console
+      console.log(`storeCreateDb()#2 : ${event.target.error.message}`);
+      // Exit the function
+      return;
+    }
   };
 
   // If an upgrade is needed (the db is currently in a wrong version, or is empty)
@@ -362,8 +367,8 @@ function storeCreateDb() {
     });
 
     // Create the 'key' index
-    let index = store.createIndex('key', {
-      unique: false
+    let index = store.createIndex('key', 'key', {
+      unique : false
     });
 
     // Close the database once the transaction completed
@@ -379,7 +384,7 @@ function storeEraseDb() {
 // Store a new keys pair into the indexedDB database
 function storeSaveCredentials(scr, mod) {
   // Open the CUSTOS database
-  const reqCreate = indexedDB.open('CUSTOS', 4);
+  const reqCreate = window.indexedDB.open('CUSTOS', 4);
 
   // The opening failed
   reqCreate.onerror = (event) => {
@@ -387,7 +392,7 @@ function storeSaveCredentials(scr, mod) {
     document.getElementById('btn_del').setAttribute('disabled', 'disabled');
     document.getElementById('btn_sav').setAttribute('disabled', 'disabled');
     // Show the error in the console
-    console.error(`Database error: ${event.target.errorCode}`);
+    console.error(`storeEraseDb() ${event.target.error.message}`);
   };
 
   // The opening has succeeded
@@ -411,18 +416,14 @@ function updateKey(db, key, val) {
   var transaction = db.transaction('secret', 'readwrite');
   // Get the secret object store
   var store = transaction.objectStore('secret');
-
-  // Get the key
-  store.get(key).onsuccess = function(e) {
-    // Update the value for the selected key
-    store.put(e.target.result, val);
-  };
+  // Store the the value
+  store.put(key, val);
 }
 
 // Load the indexedDB values and pre-fill the secret phrase and modifiers list DOM nodes
 function storeLoadDb() {
   // Open the indexedDB database
-  const reqCreate = indexedDB.open('CUSTOS', 4);
+  const reqCreate = window.indexedDB.open('CUSTOS', 4);
 
   // The opening has succeeded
   reqCreate.onsuccess = (event) => {
@@ -493,7 +494,7 @@ window.onload = function() {
   // Delete button bind
   document.getElementById('btn_del').addEventListener('click', function(event) {
     // Erase credentials stored in the CUSTOS indexedDB
-    storeEraseCredentials();
+    storeEraseDb();
   });
 
   // Save button bind
