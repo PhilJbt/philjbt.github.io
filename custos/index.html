@@ -495,14 +495,21 @@ window.onload = function() {
   document.getElementById('btn_del').addEventListener('click', function(event) {
     // Erase credentials stored in the CUSTOS indexedDB
     storeEraseDb();
+    // Rename and change the color of the Delete button
+    document.getElementById('btn_del').textContent = 'Supprimé !';
+    document.getElementById('btn_del').setAttribute('disabled', 'disabled');
   });
 
   // Save button bind
   document.getElementById('btn_sav').addEventListener('click', function(event) {
     // If the secret phrase is not empty
-    if (document.getElementById('npt_sctp').value.length > 0)
+    if (document.getElementById('npt_sctp').value.length > 0) {
       // Store secret phrase and modifier list in the CUSTOS indexedDB
       storeSaveCredentials(document.getElementById('npt_sctp').value, getModifiers());
+      // Rename and change the color of the Save button
+      document.getElementById('btn_sav').textContent = 'Sauvegardé !';
+      document.getElementById('btn_sav').setAttribute('disabled', 'disabled');
+    }
   });
 
   // Run button bind
